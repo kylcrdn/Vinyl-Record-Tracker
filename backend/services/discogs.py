@@ -45,6 +45,13 @@ class DiscogsService:
         return response.json()
 
     async def search_releases(self, query: str = "") -> dict[str, Any]:
+        if query.isdigit():
+            release = await self.get_release(int(query))
+            return {
+                "results": [self._normalize_release_result(release)],
+                "pagination": {"page": 1, "pages": 1, "items": 1, "per_page": 1},
+            }
+
         params = {
             "type": "release",
             "q": query,
@@ -89,4 +96,18 @@ class DiscogsService:
             "thumb": item.get("thumb", ""),
             "formats": format_names,
             "labels": labels,
+        }
+
+    def _normalize_release_result(self, item: dict[str, Any]) -> dict[str, Any]:
+        label_names = [label.get("name", "") for label in item.get("labels", [])]
+        format_names = [fmt.get("name", "") for fmt in item.get("formats", [])]
+
+        return {
+            "id": item.get("id"),
+            "title": item.get("title", ""),
+            "year": item.get("year"),
+            "cover_image": item.get("images", [{}])[0].get("uri", ""),
+            "thumb": item.get("thumb", ""),
+            "formats": [name for name in format_names if name],
+            "labels": [name for name in label_names if name],
         }
