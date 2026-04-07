@@ -70,3 +70,4 @@ async def search_records(query: str | None = None):
         return await discogs_service.search_releases(query=query)
     except DiscogsError as error:
         raise HTTPException(status_code=error.status_code, detail=error.detail) from error
+
