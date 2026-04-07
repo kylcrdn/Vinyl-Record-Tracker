@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
 
-import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+
+from backend.services.discogs import DiscogsError, DiscogsService
 
 BACKEND_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BACKEND_DIR.parent
@@ -17,13 +18,11 @@ load_dotenv(PROJECT_DIR / ".env")
 DISCOGS_KEY    = os.getenv("DISCOGS_CONSUMER_KEY")
 DISCOGS_SECRET = os.getenv("DISCOGS_CONSUMER_SECRET")
 
-# Discogs requires a descriptive User-Agent or they'll reject the request
-HEADERS = {
-    "Authorization": f"Discogs key={DISCOGS_KEY}, secret={DISCOGS_SECRET}",
-    "User-Agent": "VinylRecordTracker/1.0",
-}
-
 app = FastAPI()
+discogs_service = DiscogsService(
+    consumer_key=DISCOGS_KEY,
+    consumer_secret=DISCOGS_SECRET,
+)
 
 app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend")
 
@@ -32,20 +31,13 @@ app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend"
 def index():
     return FileResponse(FRONTEND_DIR / "index.html")
 
-
+# This endpoint fetches release details from the Discogs API based on the provided release ID.
 @app.get("/api/record/{release_id}")
 async def get_record(release_id: int):
-    url = f"https://api.discogs.com/releases/{release_id}"
-
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=HEADERS)
-
-    if response.status_code == 404:
-        raise HTTPException(status_code=404, detail="Release not found on Discogs")
-    if response.status_code != 200:
-        raise HTTPException(status_code=response.status_code, detail="Discogs API error")
-
-    data = response.json()
+    try:
+        data = await discogs_service.get_release(release_id)
+    except DiscogsError as error:
+        raise HTTPException(status_code=error.status_code, detail=error.detail) from error
 
     # Return only the fields the frontend needs
     return {
@@ -63,3 +55,18 @@ async def get_record(release_id: int):
         "cover":     data.get("images", [{}])[0].get("uri", ""),
         "discogs_url": data.get("uri", ""),
     }
+
+@app.get("/records/search")
+async def search_records(query: str | None = None):
+    query = query.strip() if query else ""
+
+    if not query:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide a search query to search Discogs.",
+        )
+
+    try:
+        return await discogs_service.search_releases(query=query)
+    except DiscogsError as error:
+        raise HTTPException(status_code=error.status_code, detail=error.detail) from error
