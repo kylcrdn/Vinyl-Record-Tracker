@@ -2,3 +2,7 @@ fastapi
 uvicorn[standard]
 httpx
 python-dotenv
+sqlalchemy
+pydantic
+asyncmy
+passlib

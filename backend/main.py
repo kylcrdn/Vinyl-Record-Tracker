@@ -1,11 +1,18 @@
 import os
-import httpx
-from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+import httpx
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+BACKEND_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = BACKEND_DIR.parent
+FRONTEND_DIR = PROJECT_DIR / "frontend"
+
+load_dotenv(BACKEND_DIR / ".env")
+load_dotenv(PROJECT_DIR / ".env")
 
 DISCOGS_KEY    = os.getenv("DISCOGS_CONSUMER_KEY")
 DISCOGS_SECRET = os.getenv("DISCOGS_CONSUMER_SECRET")
@@ -18,12 +25,12 @@ HEADERS = {
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend")
 
 
 @app.get("/")
 def index():
-    return FileResponse("static/index.html")
+    return FileResponse(FRONTEND_DIR / "index.html")
 
 
 @app.get("/api/record/{release_id}")
