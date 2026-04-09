@@ -1,0 +1,85 @@
+:root {
+  --bg: #efe3d0;
+  --bg-deep: #ceb393;
+  --panel-bg: rgba(255, 248, 239, 0.82);
+  --panel-border: rgba(100, 63, 31, 0.16);
+  --panel-shadow: 0 24px 80px rgba(82, 43, 14, 0.18);
+  --text: #584536;
+  --text-h: #22170f;
+  --muted: #785f4b;
+  --input-bg: rgba(255, 251, 246, 0.95);
+  --input-border: rgba(106, 70, 42, 0.2);
+  --placeholder: #9f876f;
+  --button-start: #1f130d;
+  --button-end: #714a23;
+  --stat-bg: rgba(250, 241, 230, 0.88);
+  --stat-border: rgba(99, 66, 39, 0.1);
+  --pill-bg: rgba(113, 74, 35, 0.1);
+  --pill-border: rgba(113, 74, 35, 0.18);
+  --sans: "Segoe UI", "Trebuchet MS", Verdana, sans-serif;
+  --heading: Georgia, "Times New Roman", serif;
+
+  font: 18px/1.5 var(--sans);
+  color: var(--text);
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(255, 241, 220, 0.85),
+      transparent 32%
+    ),
+    linear-gradient(145deg, var(--bg), var(--bg-deep));
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2 {
+  margin: 0;
+  color: var(--text-h);
+  font-family: var(--heading);
+  line-height: 1.05;
+}
+
+h1 {
+  font-size: clamp(3rem, 6vw, 5.4rem);
+  margin-bottom: 12px;
+}
+
+h2 {
+  font-size: clamp(1.9rem, 3vw, 2.7rem);
+  margin-bottom: 10px;
+}
+
+p {
+  margin: 0;
+}
+
+strong {
+  color: var(--text-h);
+}
+
+button,
+input {
+  font: inherit;
+}

@@ -3,14 +3,15 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.services.discogs import DiscogsError, DiscogsService
+from services.discogs import DiscogsError, DiscogsService
 
 BACKEND_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BACKEND_DIR.parent
 FRONTEND_DIR = PROJECT_DIR / "frontend"
+FRONTEND_DIST_DIR = FRONTEND_DIR / "dist"
 
 load_dotenv(BACKEND_DIR / ".env")
 load_dotenv(PROJECT_DIR / ".env")
@@ -24,12 +25,21 @@ discogs_service = DiscogsService(
     consumer_secret=DISCOGS_SECRET,
 )
 
-app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend")
-
 
 @app.get("/")
 def index():
-    return FileResponse(FRONTEND_DIR / "index.html")
+    if FRONTEND_DIST_DIR.exists():
+        return FileResponse(FRONTEND_DIST_DIR / "index.html")
+
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": (
+                "Frontend build not found. Run 'npm run build' in the frontend "
+                "folder for production, or use the Vite dev server during development."
+            )
+        },
+    )
 
 # This endpoint fetches release details from the Discogs API based on the provided release ID.
 @app.get("/api/record/{release_id}")
@@ -70,4 +80,12 @@ async def search_records(query: str | None = None):
         return await discogs_service.search_releases(query=query)
     except DiscogsError as error:
         raise HTTPException(status_code=error.status_code, detail=error.detail) from error
+
+
+if FRONTEND_DIST_DIR.exists():
+    app.mount(
+        "/",
+        StaticFiles(directory=str(FRONTEND_DIST_DIR), html=True),
+        name="frontend",
+    )
 
